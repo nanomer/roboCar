@@ -1,8 +1,12 @@
-int stateRed = 968;
-int stateBlack = 1023;
+int redMin = 400;
+int redMax = 700;
+int blackMin = 701;
+int blackMax = 1023;
+
 void setup() {
-  // put your setup code here, to run once:
+  
   //Digital
+  
   //IR
   pinMode(2, INPUT); //Front
   pinMode(3, INPUT); //Left
@@ -10,8 +14,8 @@ void setup() {
   //PR
   pinMode(5, INPUT); //Middle
 
-
   //Analog
+  
   //Motors
   pinMode(14, OUTPUT); //Left Motor
   pinMode(15, OUTPUT); //Left Motor
@@ -26,8 +30,15 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
 
+int frontIR = digitalRead(2);
+int leftIR = digitalRead(3);
+int rightIR = digitalRead(4);
+int midPR = digitalRead(5);
+int leftPR = analogRead(18);
+int rightPR = analogRead(19);
+
   //Stop when sense RED
-  if(5==stateRed || 18==stateRed || 19==stateRed)
+  if((leftPR<=redMax && leftPR>=redMin) || (rightPR<=redMax && rightPR>=redMin))
   {
     analogWrite(14, 0);
     analogWrite(15, 0);
@@ -35,8 +46,8 @@ void loop() {
     analogWrite(17, 0);
   }
 
-  //Stop when Phase 5 obstacle
-  else if(2==HIGH && !3 &&!4)
+  //Stop when Phase 4 obstacle
+  else if(frontIR==HIGH && leftIR==LOW && rightIR==LOW)
   {
     analogWrite(14, 0);
     analogWrite(15, 0);
@@ -44,29 +55,30 @@ void loop() {
     analogWrite(17, 0);
   }
 
+  //Check first for black line to follow, else worries about walls, else goes straight
   else
   {
-    if(5==stateBlack || 18==stateBlack || 19==stateBlack)
+    if(midPR==HIGH || (leftPR<=blackMax && leftPR>=blackMin) || (rightPR<=blackMax && rightPR>=blackMin))
     {
-      if(18==LOW || 19==LOW)
+      if(leftPR==LOW || rightPR==LOW)
       {
         analogWrite(14, 0);
         analogWrite(15, 0);
         analogWrite(16, 0);
         analogWrite(17, 0);
-        if(18==LOW)
+        if(leftPR==LOW)
         {
           analogWrite(14, 1023); //adjust number for speed
           analogWrite(15, 0);
           analogWrite(16, 0);
           analogWrite(17, 0);
         }
-        else if(19==LOW)
+        else if(rightPR==LOW)
         {
           analogWrite(14, 0); 
           analogWrite(15, 0);
           analogWrite(16, 0);
-          analogWrite(17, 1023);
+          analogWrite(17, 1023); //adjust for speed
         }
       }
       else
@@ -77,27 +89,38 @@ void loop() {
         analogWrite(17, 1023);
       }
     }
-    else if(2==HIGH || 3==HIGH || 4==HIGH)
+    //Phase 5: Slow when sees wall approaching
+    else if(frontIR==HIGH || leftIR==HIGH || rightIR==HIGH)
     {
-      if(2==HIGH)
+      if(frontIR==HIGH)
       {
         analogWrite(14, 510);
         analogWrite(15, 510);
         analogWrite(16, 510);
         analogWrite(17, 510);
       }
-      if(3==HIGH)
+      if(leftIR==HIGH)
       {
         analogWrite(14, 1023); //adjust number for speed
         analogWrite(15, 0);
         analogWrite(16, 0);
         analogWrite(17, 0);
+        delay(3000);          //change turning duration
+        analogWrite(14, 1023);
+        analogWrite(15, 1023);
+        analogWrite(16, 1023);
+        analogWrite(17, 1023);
       }
-      else if(4==HIGH)
+      else if(rightIR==HIGH)
       {
         analogWrite(14, 0); 
         analogWrite(15, 0);
         analogWrite(16, 0);
+        analogWrite(17, 1023);
+        delay(3000);          //change turning duration
+        analogWrite(14, 1023);
+        analogWrite(15, 1023);
+        analogWrite(16, 1023);
         analogWrite(17, 1023);
       }
     }
